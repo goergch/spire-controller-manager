@@ -14,34 +14,35 @@ The definition can be found [here](../api/v1alpha1/clusterspiffeid_types.go).
 
 ## ClusterSPIFFEIDSpec
 
-| Field | Required | Description |
-| ----- | -------- | ----------- |
-| `spiffeIDTemplate`          | REQUIRED | The template used to render the SPIFFE ID of the workload. See [Templates](#templates). |
-| `podSelector`               | OPTIONAL | A label selector used to scope which workload pods this ClusterSPIFFEID targets |
-| `namespaceSelector`         | OPTIONAL | A label selector used to scope which workload namespaces this ClusterSPIFFEID targets |
-| `dnsNameTemplates`          | OPTIONAL | One or more templates used to render DNS names for the target workload. See [Templates](#templates). |
+| Field                       | Required | Description                                                                                                     |
+| --------------------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
+| `spiffeIDTemplate`          | REQUIRED | The template used to render the SPIFFE ID of the workload. See [Templates](#templates).                         |
+| `podSelector`               | OPTIONAL | A label selector used to scope which workload pods this ClusterSPIFFEID targets                                 |
+| `ParentIdTemplate`          | OPTIONAL | The template to define the parentId. Will be generated automatically, if not specified.                         |
+| `namespaceSelector`         | OPTIONAL | A label selector used to scope which workload namespaces this ClusterSPIFFEID targets                           |
+| `dnsNameTemplates`          | OPTIONAL | One or more templates used to render DNS names for the target workload. See [Templates](#templates).            |
 | `workloadSelectorTemplates` | OPTIONAL | One or more templates used to render additional selectors for the target workload. See [Templates](#templates). |
-| `ttl`                       | OPTIONAL | Duration value indicating an upper bound on the time-to-live for SVIDs issued to target workload |
-| `federatesWith`             | OPTIONAL | One or more trust domain names that target workloads federate with |
-| `admin`                     | OPTIONAL | Indicates whether the target workload is an admin workload (i.e. can access SPIRE administrative APIs) |
+| `ttl`                       | OPTIONAL | Duration value indicating an upper bound on the time-to-live for SVIDs issued to target workload                |
+| `federatesWith`             | OPTIONAL | One or more trust domain names that target workloads federate with                                              |
+| `admin`                     | OPTIONAL | Indicates whether the target workload is an admin workload (i.e. can access SPIRE administrative APIs)          |
 
 ## ClusterSPIFFEIDStatus
 
-| Field | Description |
-| ----- | ----------- |
-| `stats` | Statistics on what the ClusterSPIFFEID was applied to and any failures. See [ClusterSPIFFEIDStats](#cluster-spiffeid-stats).
+| Field   | Description                                                                                                                  |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `stats` | Statistics on what the ClusterSPIFFEID was applied to and any failures. See [ClusterSPIFFEIDStats](#cluster-spiffeid-stats). |
 
 ### ClusterSPIFFEIDStats
 
-| Field | Description |
-| ----- | ----------- |
-| `namespaceSelected`      | How many namespaces were selected |
-| `namespacesIgnroed`      | How many namespaces were ignored |
-| `podsSelected`           | How many pods were selected |
-| `podEntryRenderFailures` | How many failures were encountered rendering a registration entry for the pod |
+| Field                    | Description                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `namespaceSelected`      | How many namespaces were selected                                                    |
+| `namespacesIgnroed`      | How many namespaces were ignored                                                     |
+| `podsSelected`           | How many pods were selected                                                          |
+| `podEntryRenderFailures` | How many failures were encountered rendering a registration entry for the pod        |
 | `entriesMasked`          | How many entries were masked because they were similar to other registration entries |
-| `entriesToSet`           | How many entries are supposed to exist based on the targeted workloads |
-| `entryFailures`          | How many entries were unable to be created/updated on SPIRE server |
+| `entriesToSet`           | How many entries are supposed to exist based on the targeted workloads               |
+| `entryFailures`          | How many entries were unable to be created/updated on SPIRE server                   |
 
 ## Templates
 
@@ -50,42 +51,42 @@ rendered using the Go standard library [text template](https://pkg.go.dev/text/t
 
 The following data is available to the template:
 
-| Field | Type | Description |
-| ----- | ---- | ----------- |
-| `{{ .TrustDomain }}` | string                                                                           | The name of the trust domain the controller is operating for |
+| Field                | Type                                                                             | Description                                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `{{ .TrustDomain }}` | string                                                                           | The name of the trust domain the controller is operating for                                                |
 | `{{ .ClusterName }}` | string                                                                           | The name of the cluster, as defined in the controller [configuration](./spire-controller-manager-config.md) |
-| `{{ .PodMeta }}`     | [ObjectMeta](https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#ObjectMeta) | The pod metadata |
-| `{{ .PodSpec }}`     | [PodSpec](https://pkg.go.dev/k8s.io/api/core/v1#PodSpec)                         | The pod specification |
-| `{{ .NodeMeta }}`    | [ObjectMeta](https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#ObjectMeta) | The node metadata for the node the pod is scheduled on |
-| `{{ .NodeSpec }}`    | [NodeSpec](https://pkg.go.dev/k8s.io/api/core/v1#NodeSpec)                       | The node specification for the node the pod is scheduled on |
+| `{{ .PodMeta }}`     | [ObjectMeta](https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#ObjectMeta) | The pod metadata                                                                                            |
+| `{{ .PodSpec }}`     | [PodSpec](https://pkg.go.dev/k8s.io/api/core/v1#PodSpec)                         | The pod specification                                                                                       |
+| `{{ .NodeMeta }}`    | [ObjectMeta](https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#ObjectMeta) | The node metadata for the node the pod is scheduled on                                                      |
+| `{{ .NodeSpec }}`    | [NodeSpec](https://pkg.go.dev/k8s.io/api/core/v1#NodeSpec)                       | The node specification for the node the pod is scheduled on                                                 |
 
 ## Examples
 
 1. Apply an Istio-style SPIFFE ID to workloads running in namespaces with the "backend" label:
 
-    ```
-    apiVersion: spire.spiffe.io/v1alpha1
-    kind: ClusterSPIFFEID
-    metadata:
-      name: backend-workloads
-    spec:
-      spiffeIDTemplate: "spiffe://domain.test/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccount }}"
-      namespaceSelector:
-        matchLabels:
-          backend: true
-    ```
+   ```
+   apiVersion: spire.spiffe.io/v1alpha1
+   kind: ClusterSPIFFEID
+   metadata:
+     name: backend-workloads
+   spec:
+     spiffeIDTemplate: "spiffe://domain.test/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccount }}"
+     namespaceSelector:
+       matchLabels:
+         backend: true
+   ```
 
 1. Federate workloads running the pods with the "banking" label with the "auditing" trust domain.
 
-    ```
-    apiVersion: spire.spiffe.io/v1alpha1
-    kind: ClusterSPIFFEID
-    metadata:
-      name: backend-workloads
-    spec:
-      spiffeIDTemplate: "spiffe://domain.test/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccount }}"
-      podSelector:
-        matchLabels:
-          banking: true
-      federatesWith: ["auditing"]
-    ```
+   ```
+   apiVersion: spire.spiffe.io/v1alpha1
+   kind: ClusterSPIFFEID
+   metadata:
+     name: backend-workloads
+   spec:
+     spiffeIDTemplate: "spiffe://domain.test/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccount }}"
+     podSelector:
+       matchLabels:
+         banking: true
+     federatesWith: ["auditing"]
+   ```

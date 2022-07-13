@@ -99,6 +99,10 @@ spec:
                       are ANDed.
                     type: object
                 type: object
+              parentIdTemplate:
+                description: ParentIdParentIdTemplate defines the ParentId for the
+                  Entry. If not specified, will be generated automatically.
+                type: string
               podSelector:
                 description: PodSelector selects the pods that are targetted by this
                   CRD.

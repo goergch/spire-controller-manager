@@ -63,6 +63,10 @@ type ClusterSPIFFEIDSpec struct {
 	// CRD.
 	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
 
+	// ParentIdParentIdTemplate defines the ParentId for the Entry. If not
+	// specified, will be generated automatically.
+	ParentIdTemplate string `json:"parentIdTemplate,omitempty"`
+
 	// Admin indicates whether or not the SVID can be used to access the SPIRE
 	// administrative APIs. Extra care should be taken to only apply this
 	// SPIFFE ID to admin workloads.
