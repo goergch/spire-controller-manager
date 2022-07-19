@@ -34,6 +34,7 @@ import (
 const (
 	dnsNameTemplateName          = "dnsNameTemplate"
 	spiffeIDTemplateName         = "spiffeIDTemplate"
+	parentIDTemplateName         = "parentIDTemplate"
 	workloadSelectorTemplateName = "workloadSelectorTemplate"
 )
 
@@ -84,6 +85,7 @@ type ParsedClusterSPIFFEIDSpec struct {
 	SPIFFEIDTemplate          *template.Template
 	NamespaceSelector         labels.Selector
 	PodSelector               labels.Selector
+	ParentIdTemplate          *template.Template
 	TTL                       time.Duration
 	FederatesWith             []spiffeid.TrustDomain
 	DNSNameTemplates          []*template.Template
@@ -113,6 +115,14 @@ func ParseClusterSPIFFEIDSpec(spec *ClusterSPIFFEIDSpec) (*ParsedClusterSPIFFEID
 	var podSelector labels.Selector
 	if spec.PodSelector != nil {
 		podSelector, err = metav1.LabelSelectorAsSelector(spec.PodSelector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var parentIdTemplate *template.Template = nil
+	if spec.ParentIdTemplate != "" {
+		parentIdTemplate, err = template.New(parentIDTemplateName).Parse(spec.ParentIdTemplate)
 		if err != nil {
 			return nil, err
 		}
@@ -149,6 +159,7 @@ func ParseClusterSPIFFEIDSpec(spec *ClusterSPIFFEIDSpec) (*ParsedClusterSPIFFEID
 		SPIFFEIDTemplate:          spiffeIDTemplate,
 		NamespaceSelector:         namespaceSelector,
 		PodSelector:               podSelector,
+		ParentIdTemplate:          parentIdTemplate,
 		TTL:                       spec.TTL.Duration,
 		FederatesWith:             federatesWith,
 		DNSNameTemplates:          dnsNameTemplates,

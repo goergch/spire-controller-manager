@@ -36,10 +36,6 @@ func renderPodEntry(spec *spirev1alpha1.ParsedClusterSPIFFEIDSpec, node *corev1.
 	selectors := []spireapi.Selector{
 		{Type: "k8s", Value: fmt.Sprintf("pod-uid:%s", pod.UID)},
 	}
-	parentID, err := spiffeid.FromPathf(trustDomain, "/spire/agent/k8s_psat/%s/%s", clusterName, node.UID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render parent ID: %w", err)
-	}
 
 	data := &templateData{
 		TrustDomain: trustDomain.String(),
@@ -48,6 +44,19 @@ func renderPodEntry(spec *spirev1alpha1.ParsedClusterSPIFFEIDSpec, node *corev1.
 		PodSpec:     &pod.Spec,
 		NodeMeta:    &node.ObjectMeta,
 		NodeSpec:    &node.Spec,
+	}
+
+	var parentID spiffeid.ID
+	var parentErr error
+
+	if spec.ParentIdTemplate != nil {
+		parentID, parentErr = renderSPIFFEID(spec.ParentIdTemplate, data, trustDomain)
+	} else {
+		parentID, parentErr = spiffeid.FromPathf(trustDomain, "/spire/agent/k8s_psat/%s/%s", clusterName, node.UID)
+
+	}
+	if parentErr != nil {
+		return nil, fmt.Errorf("failed to render parent ID: %w", parentErr)
 	}
 
 	spiffeID, err := renderSPIFFEID(spec.SPIFFEIDTemplate, data, trustDomain)
